@@ -7,13 +7,14 @@
 //========================================================//
 
 #include "cache.h"
+#include <math.h>
 
 //
 // TODO:Student Information
 //
-const char *studentName = "NAME";
-const char *studentID   = "PID";
-const char *email       = "EMAIL";
+const char *studentName = "Kellian Hunt, Angelique Taylor";
+const char *studentID   = "A53244070, A53230147";
+const char *email       = "kchunt@eng.ucsd.edu, amt062@eng.ucsd.edu";
 
 //------------------------------------//
 //        Cache Configuration         //
@@ -58,6 +59,31 @@ uint64_t l2cachePenalties; // L2$ penalties
 //
 //TODO: Add your Cache data structures here
 //
+int blockoffsetBits;
+int icacheIndexBits;
+int dcacheIndexBits;
+int l2cacheIndexBits;
+
+struct way {
+  int validBit;
+  int tag;
+  int index;
+  int blockoffset;
+  int lru;
+};
+
+struct set {
+  struct way *nWays;
+};
+
+struct cache {
+  struct set *sets;
+};
+
+struct cache icache;
+struct cache dcache;
+struct cache l2cache;
+
 
 //------------------------------------//
 //          Cache Functions           //
@@ -82,6 +108,46 @@ init_cache()
   //
   //TODO: Initialize Cache Simulator Data Structures
   //
+  icacheIndexBits = log2(icacheSets);
+  dcacheIndexBits = log2(dcacheSets);
+  l2cacheIndexBits = log2(l2cacheSets);
+  blockoffsetBits = log2(blocksize);
+
+  icache.sets = malloc(icacheSets * sizeof(struct set));
+
+  for (int i = 0; i < icacheSets; i++){
+    icache.sets[i].nWays = malloc(icacheAssoc * sizeof(struct way));
+    for (int j = 0; j < icacheAssoc; j++) {
+      icache.sets[i].nWays[j].validBit = 0;
+      icache.sets[i].nWays[j].tag = 0;
+      icache.sets[i].nWays[j].index = 0;
+      icache.sets[i].nWays[j].blockoffset = 0;
+      icache.sets[i].nWays[j].lru = 0;
+    }
+  }
+
+  for (int i = 0; i < dcacheSets; i++){
+    dcache.sets[i].nWays = malloc(dcacheAssoc * sizeof(struct way));
+    for (int j = 0; j < dcacheAssoc; j++) {
+      dcache.sets[i].nWays[j].validBit = 0;
+      dcache.sets[i].nWays[j].tag = 0;
+      dcache.sets[i].nWays[j].index = 0;
+      dcache.sets[i].nWays[j].blockoffset = 0;
+      dcache.sets[i].nWays[j].lru = 0;
+    }
+  }
+
+  for (int i = 0; i < l2cacheSets; i++){
+    l2cache.sets[i].nWays = malloc(l2cacheAssoc * sizeof(struct way));
+    for (int j = 0; j < icacheAssoc; j++) {
+      l2cache.sets[i].nWays[j].validBit = 0;
+      l2cache.sets[i].nWays[j].tag = 0;
+      l2cache.sets[i].nWays[j].index = 0;
+      l2cache.sets[i].nWays[j].blockoffset = 0;
+      l2cache.sets[i].nWays[j].lru = 0;
+    }
+  }
+
 }
 
 // Perform a memory access through the icache interface for the address 'addr'
