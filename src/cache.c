@@ -118,14 +118,14 @@ print_binary(uint32_t decimal) {
 
 uint32_t
 parse_address(uint32_t address, int leftoffset, int rightoffset) {
-  if(count < 5) { printf("\taddress :"); print_binary(address); }
-  if (count < 5) { printf("left: %d, right: %d\n", leftoffset, rightoffset ); }
+  if(count < 5) { printf("\taddress :                "); print_binary(address); }
+  if (count < 5) { printf("\tleft: %d, right: %d\n", leftoffset, rightoffset ); }
   uint32_t result = address << leftoffset;
-  if (count < 5) { printf("\taddress << leftoffset : " ); print_binary(result); }
+  if (count < 5) { printf("\taddress << leftoffset :  " ); print_binary(result); }
   result = result >> leftoffset;
-  if (count < 5) { printf("\taddress >> leftoffset : " ); print_binary(result); }
+  if (count < 5) { printf("\taddress >> leftoffset :  " ); print_binary(result); }
   result = result >> rightoffset;
-  if (count < 5) { printf("\taddress >> rightoffset : " ); print_binary(result); }
+  if (count < 5) { printf("\taddress >> rightoffset : " ); print_binary(result); printf("\n");}
   return result;
 }
 
@@ -212,7 +212,7 @@ icache_access(uint32_t addr)
   int index = parse_address(addr, icacheTagBits, blockoffsetBits);
   int tag = parse_address(addr, 0, icacheTagBits + blockoffsetBits);
   int blockoffset = parse_address(addr, icacheTagBits + icacheIndexBits, 0);
-  if(count < 5) { printf("\tResult--- index: %d, tag: %d, blockoffset: %d\n", index, tag, blockoffset); }
+  if(count < 5) { printf("\tResult--- index: %d, tag: %d, blockoffset: %d\n\n\n", index, tag, blockoffset); }
   count++;
   return memspeed;
 }
