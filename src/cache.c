@@ -103,9 +103,9 @@ print_binary(uint32_t decimal) {
       printf("%c", c);
       // move down one bit
       mask >>= 1;
-      }
-      // print a space very 4 bits
-      printf(" ");
+    }
+    // print a space very 4 bits
+    printf(" ");
   }
   printf("\n");
 }
@@ -121,6 +121,16 @@ parse_address(uint32_t address, int leftoffset, int rightoffset) {
   result = result >> rightoffset;
   if (count < 5) { printf("\taddress >> rightoffset : " ); print_binary(result); printf("\n");}
   return result;
+}
+
+void
+update_lru(struct set *cacheSet, int wayIndex, int cacheAssoc) {
+  for(int i = 0; i < cacheAssoc; i++)
+    if(cacheSet->nWays[i].lru < cacheSet->nWays[wayIndex].lru)
+      cacheSet->nWays[i].lru++;
+  
+  if (count < 5) { printf("lru %d to 0", cacheSet->nWays[wayIndex].lru); }
+  cacheSet->nWays[wayIndex].lru = 0;
 }
 
 int ADDRESS_SIZE = 32;
@@ -163,7 +173,7 @@ init_cache()
       icache.sets[i].nWays[j].tag = 0;
       icache.sets[i].nWays[j].index = 0;
       icache.sets[i].nWays[j].blockoffset = 0;
-      icache.sets[i].nWays[j].lru = 0;
+      icache.sets[i].nWays[j].lru = icacheAssoc;
     }
   }
 
@@ -175,7 +185,7 @@ init_cache()
       dcache.sets[i].nWays[j].tag = 0;
       dcache.sets[i].nWays[j].index = 0;
       dcache.sets[i].nWays[j].blockoffset = 0;
-      dcache.sets[i].nWays[j].lru = 0;
+      dcache.sets[i].nWays[j].lru = dcacheAssoc;
     }
   }
 
@@ -187,7 +197,7 @@ init_cache()
       l2cache.sets[i].nWays[j].tag = 0;
       l2cache.sets[i].nWays[j].index = 0;
       l2cache.sets[i].nWays[j].blockoffset = 0;
-      l2cache.sets[i].nWays[j].lru = 0;
+      l2cache.sets[i].nWays[j].lru = l2cacheAssoc;
     }
   }
 
@@ -211,11 +221,13 @@ icache_access(uint32_t addr)
 
   // Index into the cache
   struct set setTemp = icache.sets[index];
-  for (int j = 0; j < icacheAssoc; j++) {
-    if(setTemp.nWays[j].tag == tag){
+  for (int i = 0; i < icacheAssoc; i++) {
+    if(setTemp.nWays[i].tag == tag){
       //Check valid bit
-      if(setTemp.nWays[j].validBit == 1){ //hit
-        setTemp.nWays[j].lru += 1;
+      if(setTemp.nWays[i].validBit == 1){ //hit
+        update_lru(&icache.sets[index], i, icacheAssoc);
+      } else { // miss
+
       }
     }
   }
