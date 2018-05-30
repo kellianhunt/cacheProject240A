@@ -95,25 +95,19 @@ struct cache l2cache;
 //------------------------------------//
 void
 print_binary(uint32_t decimal) {
-  if (decimal>0) { 
-    // create a "mask" to look at the 32nd bit
-    // note that we use an unsigned mask!
-    // this is important because we don't want
-    // sign-extending when we shift to the next bit.
-    unsigned int mask = 1<<31;
-    for (int i=0; i<8; i++) {
-        for (int j=0; j<4; j++) {
-          // check current bit, and print
-          char c = (decimal & mask) == 0 ? '0' : '1';
-          printf("%c", c);
-           // move down one bit
-           mask >>= 1;
-          }
-            // print a space very 4 bits
-          printf(" ");
-        }
-      printf("\n");
-    }
+  unsigned int mask = 1<<31;
+  for (int i=0; i<8; i++) {
+    for (int j=0; j<4; j++) {
+      // check current bit, and print
+      unsigned char c = (decimal & mask) == 0 ? '0' : '1';
+      printf("%c", c);
+      // move down one bit
+      mask >>= 1;
+      }
+      // print a space very 4 bits
+      printf(" ");
+  }
+  printf("\n");
 }
 
 uint32_t
@@ -208,7 +202,7 @@ icache_access(uint32_t addr)
   //
   //TODO: Implement I$
   //
-  //if(count < 5) { printf("index bits: %d, tag bit: %d, blockoffset bits: %d\n", icacheIndexBits, icacheTagBits, blockoffsetBits); }
+  if(count < 5) { printf("tag bit: %d, index bits: %d, blockoffset bits: %d\n", icacheTagBits, icacheIndexBits, blockoffsetBits); }
   int index = parse_address(addr, icacheTagBits, blockoffsetBits);
   int tag = parse_address(addr, 0, icacheTagBits + blockoffsetBits);
   int blockoffset = parse_address(addr, icacheTagBits + icacheIndexBits, 0);
@@ -227,7 +221,7 @@ dcache_access(uint32_t addr)
   //TODO: Implement D$
   //
   uint32_t index = parse_address(addr, dcacheTagBits, blockoffsetBits);
-  uint32_t tag = parse_address(addr, 0, dcacheTagBits + blockoffsetBits);
+  uint32_t tag = parse_address(addr, 0, dcacheIndexBits + blockoffsetBits);
   uint32_t blockoffset = parse_address(addr, dcacheTagBits + dcacheIndexBits, 0);
 
   return memspeed;
@@ -243,7 +237,7 @@ l2cache_access(uint32_t addr)
   //TODO: Implement L2$
   //
   int index = parse_address(addr, l2cacheTagBits, blockoffsetBits);
-  int tag = parse_address(addr, 0, l2cacheTagBits + blockoffsetBits);
+  int tag = parse_address(addr, 0, l2cacheIndexBits + blockoffsetBits);
   int blockoffset = parse_address(addr, l2cacheTagBits + l2cacheIndexBits, 0);
 
   return memspeed;
