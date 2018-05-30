@@ -84,6 +84,16 @@ struct cache icache;
 struct cache dcache;
 struct cache l2cache;
 
+//------------------------------------//
+//          Helper Functions          //
+//------------------------------------//
+int
+parse_address(uint32_t address, leftoffset, rightoffset) {
+  int result = address << leftoffset;
+  result = address >> leftoffset;
+  result = address >> rightoffset;
+  return result;
+}
 
 //------------------------------------//
 //          Cache Functions           //
@@ -159,6 +169,8 @@ icache_access(uint32_t addr)
   //
   //TODO: Implement I$
   //
+  int index = parse_address(addr, icacheTagBits, blockoffsetBits);
+  
   return memspeed;
 }
 
