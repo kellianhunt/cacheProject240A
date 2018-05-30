@@ -208,6 +208,22 @@ icache_access(uint32_t addr)
   int blockoffset = parse_address(addr, icacheTagBits + icacheIndexBits, 0);
   if(count < 5) { printf("\tResult--- index: %d, tag: %d, blockoffset: %d\n\n\n", index, tag, blockoffset); }
   count++;
+
+  // Index into the cache
+  struct set setTemp = icache.sets[index];
+  for (int j = 0; j < icacheAssoc; j++) {
+    if(setTemp.nWays[j].tag == tag){
+      //Check valid bit
+      if(setTemp.nWays[j].validBit == 1){ //hit
+        setTemp.nWays[j].lru += 1;
+      }
+    }
+  }
+  
+
+  // Check valid bit in cache
+
+
   return memspeed;
 }
 
