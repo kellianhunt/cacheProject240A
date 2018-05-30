@@ -93,11 +93,39 @@ struct cache l2cache;
 //------------------------------------//
 //          Helper Functions          //
 //------------------------------------//
-int
+void
+print_binary(uint32_t decimal) {
+  if (decimal>0) { 
+    // create a "mask" to look at the 32nd bit
+    // note that we use an unsigned mask!
+    // this is important because we don't want
+    // sign-extending when we shift to the next bit.
+    unsigned int mask = 1<<31;
+    for (int i=0; i<8; i++) {
+        for (int j=0; j<4; j++) {
+          // check current bit, and print
+          char c = (decimal & mask) == 0 ? '0' : '1';
+          printf("%c", c);
+           // move down one bit
+           mask >>= 1;
+          }
+            // print a space very 4 bits
+          printf(" ");
+        }
+      printf("\n");
+    }
+}
+
+uint32_t
 parse_address(uint32_t address, int leftoffset, int rightoffset) {
-  int result = address << leftoffset;
-  result = address >> leftoffset;
-  result = address >> rightoffset;
+  if(count < 5) { printf("\taddress :"); print_binary(address); }
+  if (count < 5) { printf("left: %d, right: %d\n", leftoffset, rightoffset ); }
+  uint32_t result = address << leftoffset;
+  if (count < 5) { printf("\taddress << leftoffset : " ); print_binary(result); }
+  result = result >> leftoffset;
+  if (count < 5) { printf("\taddress >> leftoffset : " ); print_binary(result); }
+  result = result >> rightoffset;
+  if (count < 5) { printf("\taddress >> rightoffset : " ); print_binary(result); }
   return result;
 }
 
@@ -180,11 +208,11 @@ icache_access(uint32_t addr)
   //
   //TODO: Implement I$
   //
-  if(count < 5) { printf("%d", addr); }
+  //if(count < 5) { printf("index bits: %d, tag bit: %d, blockoffset bits: %d\n", icacheIndexBits, icacheTagBits, blockoffsetBits); }
   int index = parse_address(addr, icacheTagBits, blockoffsetBits);
   int tag = parse_address(addr, 0, icacheTagBits + blockoffsetBits);
   int blockoffset = parse_address(addr, icacheTagBits + icacheIndexBits, 0);
-  if(count < 5) { printf("index: %d, tag: %d, blockoffset: %d\n", index, tag, blockoffset); }
+  if(count < 5) { printf("\tResult--- index: %d, tag: %d, blockoffset: %d\n", index, tag, blockoffset); }
   count++;
   return memspeed;
 }
@@ -198,9 +226,9 @@ dcache_access(uint32_t addr)
   //
   //TODO: Implement D$
   //
-  int index = parse_address(addr, dcacheTagBits, blockoffsetBits);
-  int tag = parse_address(addr, 0, dcacheTagBits + blockoffsetBits);
-  int blockoffset = parse_address(addr, dcacheTagBits + dcacheIndexBits, 0);
+  uint32_t index = parse_address(addr, dcacheTagBits, blockoffsetBits);
+  uint32_t tag = parse_address(addr, 0, dcacheTagBits + blockoffsetBits);
+  uint32_t blockoffset = parse_address(addr, dcacheTagBits + dcacheIndexBits, 0);
 
   return memspeed;
 }
