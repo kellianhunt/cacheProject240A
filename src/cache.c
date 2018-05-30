@@ -63,6 +63,9 @@ int blockoffsetBits;
 int icacheIndexBits;
 int dcacheIndexBits;
 int l2cacheIndexBits;
+int icacheTagBits;
+int dcacheTagBits;
+int l2TagBits;
 
 struct way {
   int validBit;
@@ -84,7 +87,7 @@ struct cache icache;
 struct cache dcache;
 struct cache l2cache;
 
-
+int ADDRESS_SIZE = 32;
 //------------------------------------//
 //          Cache Functions           //
 //------------------------------------//
@@ -112,7 +115,10 @@ init_cache()
   dcacheIndexBits = log2(dcacheSets);
   l2cacheIndexBits = log2(l2cacheSets);
   blockoffsetBits = log2(blocksize);
-
+  icacheTagBits = ADDRESS_SIZE - icacheIndexBits - blockoffsetBits;
+  dcacheTagBits = ADDRESS_SIZE - dcacheIndexBits - blockoffsetBits;
+  l2TagBits = ADDRESS_SIZE - dcacheIndexBits - blockoffsetBits;
+  
   icache.sets = malloc(icacheSets * sizeof(struct set));
 
   for (int i = 0; i < icacheSets; i++){
