@@ -8,6 +8,7 @@
 
 #include "cache.h"
 #include <math.h>
+#include <stdio.h>
 
 //
 // TODO:Student Information
@@ -65,7 +66,9 @@ int dcacheIndexBits;
 int l2cacheIndexBits;
 int icacheTagBits;
 int dcacheTagBits;
-int l2TagBits;
+int l2cacheTagBits;
+
+int count = 0;
 
 struct way {
   int validBit;
@@ -91,7 +94,7 @@ struct cache l2cache;
 //          Helper Functions          //
 //------------------------------------//
 int
-parse_address(uint32_t address, leftoffset, rightoffset) {
+parse_address(uint32_t address, int leftoffset, int rightoffset) {
   int result = address << leftoffset;
   result = address >> leftoffset;
   result = address >> rightoffset;
@@ -128,10 +131,9 @@ init_cache()
   blockoffsetBits = log2(blocksize);
   icacheTagBits = ADDRESS_SIZE - icacheIndexBits - blockoffsetBits;
   dcacheTagBits = ADDRESS_SIZE - dcacheIndexBits - blockoffsetBits;
-  l2TagBits = ADDRESS_SIZE - dcacheIndexBits - blockoffsetBits;
+  l2cacheTagBits = ADDRESS_SIZE - dcacheIndexBits - blockoffsetBits;
   
   icache.sets = malloc(icacheSets * sizeof(struct set));
-
   for (int i = 0; i < icacheSets; i++){
     icache.sets[i].nWays = malloc(icacheAssoc * sizeof(struct way));
     for (int j = 0; j < icacheAssoc; j++) {
@@ -143,6 +145,7 @@ init_cache()
     }
   }
 
+  dcache.sets = malloc(dcacheSets * sizeof(struct set));
   for (int i = 0; i < dcacheSets; i++){
     dcache.sets[i].nWays = malloc(dcacheAssoc * sizeof(struct way));
     for (int j = 0; j < dcacheAssoc; j++) {
@@ -154,6 +157,7 @@ init_cache()
     }
   }
 
+  l2cache.sets = malloc(l2cacheSets * sizeof(struct set));
   for (int i = 0; i < l2cacheSets; i++){
     l2cache.sets[i].nWays = malloc(l2cacheAssoc * sizeof(struct way));
     for (int j = 0; j < icacheAssoc; j++) {
@@ -176,8 +180,12 @@ icache_access(uint32_t addr)
   //
   //TODO: Implement I$
   //
+  if(count < 5) { printf("%d", addr); }
   int index = parse_address(addr, icacheTagBits, blockoffsetBits);
-
+  int tag = parse_address(addr, 0, icacheTagBits + blockoffsetBits);
+  int blockoffset = parse_address(addr, icacheTagBits + icacheIndexBits, 0);
+  if(count < 5) { printf("index: %d, tag: %d, blockoffset: %d\n", index, tag, blockoffset); }
+  count++;
   return memspeed;
 }
 
@@ -190,6 +198,10 @@ dcache_access(uint32_t addr)
   //
   //TODO: Implement D$
   //
+  int index = parse_address(addr, dcacheTagBits, blockoffsetBits);
+  int tag = parse_address(addr, 0, dcacheTagBits + blockoffsetBits);
+  int blockoffset = parse_address(addr, dcacheTagBits + dcacheIndexBits, 0);
+
   return memspeed;
 }
 
@@ -202,5 +214,9 @@ l2cache_access(uint32_t addr)
   //
   //TODO: Implement L2$
   //
+  int index = parse_address(addr, l2cacheTagBits, blockoffsetBits);
+  int tag = parse_address(addr, 0, l2cacheTagBits + blockoffsetBits);
+  int blockoffset = parse_address(addr, l2cacheTagBits + l2cacheIndexBits, 0);
+
   return memspeed;
 }
