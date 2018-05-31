@@ -127,7 +127,7 @@ update_lru(struct set *cacheSet, int wayIndex, int cacheAssoc) {
   cacheSet->nWays[wayIndex].lru = 0;
 }
 
-int ADDRESS_SIZE = 32;
+int ADDRESS_SIZE = 32; 
 //------------------------------------//
 //          Cache Functions           //
 //------------------------------------//
