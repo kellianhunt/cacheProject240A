@@ -83,6 +83,10 @@ struct set {
 
 struct cache {
   struct set *sets;
+  int tagBits;
+  int offsetBits;
+  int associativity;
+  int indexBits;
 };
 
 struct cache icache;
@@ -108,14 +112,14 @@ print_binary(uint32_t decimal) {
 
 uint32_t
 parse_address(uint32_t address, int leftoffset, int rightoffset) {
-  if(count < 50 && countPrint == 1) { printf("\taddress :                "); print_binary(address); }
-  if (count < 50 && countPrint == 1) { printf("\tleft: %d, right: %d\n", leftoffset, rightoffset ); }
+  //if(count < 50 && countPrint == 1) { printf("\taddress :                "); print_binary(address); }
+  //if (count < 50 && countPrint == 1) { printf("\tleft: %d, right: %d\n", leftoffset, rightoffset ); }
   uint32_t result = address << leftoffset;
-  if (count < 50 && countPrint == 1) { printf("\taddress << leftoffset :  " ); print_binary(result); }
+  //if (count < 50 && countPrint == 1) { printf("\taddress << leftoffset :  " ); print_binary(result); }
   result = result >> leftoffset;
-  if (count < 50 && countPrint == 1) { printf("\taddress >> leftoffset :  " ); print_binary(result); }
+  //if (count < 50 && countPrint == 1) { printf("\taddress >> leftoffset :  " ); print_binary(result); }
   result = result >> rightoffset;
-  if (count < 50 && countPrint == 1) { printf("\taddress >> rightoffset : " ); print_binary(result); printf("\n");}
+  //if (count < 50 && countPrint == 1) { printf("\taddress >> rightoffset : " ); print_binary(result); printf("\n");}
   return result;
 }
 
@@ -129,6 +133,20 @@ update_lru(struct set *cacheSet, int wayIndex, int cacheAssoc) {
   cacheSet->nWays[wayIndex].lru = 1;
 }
  
+void
+invalidate(struct cache *cachePtr, uint32_t address) {
+  int index = parse_address(address, cache.tagBits, cache.blockoffset);
+  int tag = parse_address(address, 0, cache.indexBits + cache.blockoffset);
+  int blockoffset = parse_address(address, dcacheTagBits + dcacheIndexBits, 0);
+
+  for(int i = 0; i < cacheAssoc; i++) {
+    if(cacheSet->nWays[i].tag == tag) {
+      cacheSet->nWays[i].validBit = 0;
+      return;
+    }
+  }
+}
+
 //------------------------------------//
 //          Cache Functions           //
 //------------------------------------//
@@ -169,6 +187,10 @@ init_cache()
       icache.sets[i].nWays[j].lru = icacheAssoc;
     }
   }
+  icache.tagBits = icacheTagBits;
+  icache.offsetBits = blockoffsetBits;
+  icache.associativity = icacheAssoc;
+  icache.indexBits = icacheIndexBits;
 
   dcache.sets = malloc(dcacheSets * sizeof(struct set));
   for (int i = 0; i < dcacheSets; i++){
@@ -181,6 +203,10 @@ init_cache()
       dcache.sets[i].nWays[j].lru = dcacheAssoc;
     }
   }
+  dcache.tagBits = dcacheTagBits;
+  dcache.offsetBits = blockoffsetBits;
+  dcache.associativity = dcacheAssoc;
+  dcache.indexBits = dcacheIndexBits;
 
   l2cache.sets = malloc(l2cacheSets * sizeof(struct set));
   for (int i = 0; i < l2cacheSets; i++){
@@ -193,7 +219,10 @@ init_cache()
       l2cache.sets[i].nWays[j].lru = l2cacheAssoc;
     }
   }
-
+  l2cache.tagBits = dcacheTagBits;
+  l2cache.offsetBits = blockoffsetBits;
+  l2cache.associativity = dcacheAssoc;
+  l2cache.indexBits = dcacheIndexBits;
 }
 
 // Perform a memory access through the icache interface for the address 'addr'
@@ -398,12 +427,16 @@ l2cache_access(uint32_t addr)
     if (setTemp.nWays[i].lru == l2cacheAssoc) { // found LRU
       // update the cache
       update_lru(&l2cache.sets[index], i, l2cacheAssoc);
+
+      if(inclusive == TRUE) {
+        uint32_t invalidAddress = 
+        invalidate(&icache, invalidAddress);
+        invalidate(&dcache, invalidAddress);
+      }
+
       l2cache.sets[index].nWays[i].tag = tag;
       l2cache.sets[index].nWays[i].blockoffset = blockoffset;
       l2cache.sets[index].nWays[i].validBit = 1; 
-
-      invalidate(&icache.sets[index], setTemp.nWays[i].index, setTemp.nWays[i].tag, icacheAssoc);
-      invalidate(&dcache.sets[index], setTemp.nWays[i].index, setTemp.nWays[i].tag, dcacheAssoc);
 
       l2cachePenalties += memspeed;
       return l2cachePenalties + l2cacheHitTime;
