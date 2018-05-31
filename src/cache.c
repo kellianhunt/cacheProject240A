@@ -67,6 +67,7 @@ int dcacheTagBits;
 int l2cacheTagBits;
 
 int count = 0;
+int countPrint = 0;
 
 struct way {
   int validBit;
@@ -99,7 +100,7 @@ print_binary(uint32_t decimal) {
     char c = (decimal & oneBitMask) == 0 ? '0' : '1';
     printf("%c", c);
     oneBitMask >>= 1;
-    if(i % 4 == 0)
+    if((i+1) % 4 == 0)
       printf(" ");
   }
   printf("\n");
@@ -107,14 +108,14 @@ print_binary(uint32_t decimal) {
 
 uint32_t
 parse_address(uint32_t address, int leftoffset, int rightoffset) {
-  if(count < 5) { printf("\taddress :                "); print_binary(address); }
-  if (count < 5) { printf("\tleft: %d, right: %d\n", leftoffset, rightoffset ); }
+  if(count < 50 && countPrint == 1) { printf("\taddress :                "); print_binary(address); }
+  if (count < 50 && countPrint == 1) { printf("\tleft: %d, right: %d\n", leftoffset, rightoffset ); }
   uint32_t result = address << leftoffset;
-  if (count < 5) { printf("\taddress << leftoffset :  " ); print_binary(result); }
+  if (count < 50 && countPrint == 1) { printf("\taddress << leftoffset :  " ); print_binary(result); }
   result = result >> leftoffset;
-  if (count < 5) { printf("\taddress >> leftoffset :  " ); print_binary(result); }
+  if (count < 50 && countPrint == 1) { printf("\taddress >> leftoffset :  " ); print_binary(result); }
   result = result >> rightoffset;
-  if (count < 5) { printf("\taddress >> rightoffset : " ); print_binary(result); printf("\n");}
+  if (count < 50 && countPrint == 1) { printf("\taddress >> rightoffset : " ); print_binary(result); printf("\n");}
   return result;
 }
 
@@ -124,7 +125,7 @@ update_lru(struct set *cacheSet, int wayIndex, int cacheAssoc) {
     if(cacheSet->nWays[i].lru < cacheSet->nWays[wayIndex].lru)
       cacheSet->nWays[i].lru++;
   
-  if (count < 5) { printf("lru %d to 1", cacheSet->nWays[wayIndex].lru); }
+  //if (count < 5) { printf("lru %d to 1\n", cacheSet->nWays[wayIndex].lru); }
   cacheSet->nWays[wayIndex].lru = 1;
 }
  
@@ -203,12 +204,12 @@ icache_access(uint32_t addr)
 {
   icacheRefs++;
 
-  if(count < 5) { printf("tag bit: %d, index bits: %d, blockoffset bits: %d\n", icacheTagBits, icacheIndexBits, blockoffsetBits); }
+  //if(count < 5) { printf("tag bit: %d, index bits: %d, blockoffset bits: %d\n", icacheTagBits, icacheIndexBits, blockoffsetBits); }
   int index = parse_address(addr, icacheTagBits, blockoffsetBits);
-  int tag = parse_address(addr, 0, icacheTagBits + blockoffsetBits);
+  int tag = parse_address(addr, 0, icacheIndexBits + blockoffsetBits);
   int blockoffset = parse_address(addr, icacheTagBits + icacheIndexBits, 0);
-  if(count < 5) { printf("\tResult--- index: %d, tag: %d, blockoffset: %d\n\n\n", index, tag, blockoffset); }
-  count++;
+  //if(count < 5) { printf("\tResult--- index: %d, tag: %d, blockoffset: %d\n\n\n", index, tag, blockoffset); }
+  //count++;
 
   // index into the cache
   struct set setTemp = icache.sets[index];
@@ -273,11 +274,15 @@ uint32_t
 dcache_access(uint32_t addr)
 {
   dcacheRefs++;
-  if(count < 5) { printf("tag bit: %d, index bits: %d, blockoffset bits: %d\n", dcacheTagBits, dcacheIndexBits, blockoffsetBits); }
+
+  countPrint = 1;
+  if(count < 50) { printf("tag bit: %d, index bits: %d, blockoffset bits: %d\n", dcacheTagBits, dcacheIndexBits, blockoffsetBits); }
   int index = parse_address(addr, dcacheTagBits, blockoffsetBits);
-  int tag = parse_address(addr, 0, dcacheTagBits + blockoffsetBits);
+  int tag = parse_address(addr, 0, dcacheIndexBits + blockoffsetBits);
   int blockoffset = parse_address(addr, dcacheTagBits + dcacheIndexBits, 0);
-  if(count < 5) { printf("\tResult--- index: %d, tag: %d, blockoffset: %d\n\n\n", index, tag, blockoffset); }
+  if(count < 50) { printf("\tResult--- index: %d, tag: %d, blockoffset: %d\n\n\n", index, tag, blockoffset); }
+  count++;
+  countPrint = 0;
 
   // index into the cache
   struct set setTemp = dcache.sets[index];
@@ -343,12 +348,12 @@ l2cache_access(uint32_t addr)
 {
   l2cacheRefs++;
   
-  if(count < 5) { printf("tag bit: %d, index bits: %d, blockoffset bits: %d\n", l2cacheTagBits, l2cacheIndexBits, blockoffsetBits); }
+  //if(count < 5) { printf("tag bit: %d, index bits: %d, blockoffset bits: %d\n", l2cacheTagBits, l2cacheIndexBits, blockoffsetBits); }
   int index = parse_address(addr, l2cacheTagBits, blockoffsetBits);
-  int tag = parse_address(addr, 0, l2cacheTagBits + blockoffsetBits);
+  int tag = parse_address(addr, 0, l2cacheIndexBits + blockoffsetBits);
   int blockoffset = parse_address(addr, l2cacheTagBits + l2cacheIndexBits, 0);
-  if(count < 5) { printf("\tResult--- index: %d, tag: %d, blockoffset: %d\n\n\n", index, tag, blockoffset); }
-  count++;
+  //if(count < 5) { printf("\tResult--- index: %d, tag: %d, blockoffset: %d\n\n\n", index, tag, blockoffset); }
+
 
   // index into the cache
   struct set setTemp = l2cache.sets[index];
@@ -396,6 +401,9 @@ l2cache_access(uint32_t addr)
       l2cache.sets[index].nWays[i].tag = tag;
       l2cache.sets[index].nWays[i].blockoffset = blockoffset;
       l2cache.sets[index].nWays[i].validBit = 1; 
+
+      invalidate(&icache.sets[index], setTemp.nWays[i].index, setTemp.nWays[i].tag, icacheAssoc);
+      invalidate(&dcache.sets[index], setTemp.nWays[i].index, setTemp.nWays[i].tag, dcacheAssoc);
 
       l2cachePenalties += memspeed;
       return l2cachePenalties + l2cacheHitTime;
