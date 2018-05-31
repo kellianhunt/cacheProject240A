@@ -57,9 +57,6 @@ uint64_t l2cachePenalties; // L2$ penalties
 //        Cache Data Structures       //
 //------------------------------------//
 
-//
-//TODO: Add your Cache data structures here
-//
 int blockoffsetBits;
 int icacheIndexBits;
 int dcacheIndexBits;
@@ -93,19 +90,16 @@ struct cache l2cache;
 //------------------------------------//
 //          Helper Functions          //
 //------------------------------------//
+
 void
 print_binary(uint32_t decimal) {
-  unsigned int mask = 1<<31;
-  for (int i=0; i<8; i++) {
-    for (int j=0; j<4; j++) {
-      // check current bit, and print
-      unsigned char c = (decimal & mask) == 0 ? '0' : '1';
-      printf("%c", c);
-      // move down one bit
-      mask >>= 1;
-    }
-    // print a space very 4 bits
-    printf(" ");
+  unsigned int oneBitMask = 1<<31;
+  for (int i=0; i<32; i++) {
+    char c = (decimal & oneBitMask) == 0 ? '0' : '1';
+    printf("%c", c);
+    oneBitMask >>= 1;
+    if(i % 4 == 0)
+      printf(" ");
   }
   printf("\n");
 }
@@ -154,9 +148,7 @@ init_cache()
   l2cacheMisses     = 0;
   l2cachePenalties  = 0;
   
-  //
-  //TODO: Initialize Cache Simulator Data Structures
-  //
+  // Initialize cache data structures
   icacheIndexBits = log2(icacheSets);
   dcacheIndexBits = log2(dcacheSets);
   l2cacheIndexBits = log2(l2cacheSets);
