@@ -123,6 +123,17 @@ parse_address(uint32_t address, int leftoffset, int rightoffset) {
   return result;
 }
 
+uint32_t
+rebuild_address(struct cache *cachePtr, uint32_t tag, uint32_t index, uint32_t blockoffset) {
+
+  uint32_t newTag = tag << (cachePtr->indexBits + cachePtr->offsetBits);
+  uint32_t newIndex = index << (cachePtr->offsetBits);
+  uint32_t newBlockoffset = blockoffset;
+
+  return newTag + newIndex + newBlockoffset;
+
+}
+
 void
 update_lru(struct set *cacheSet, int wayIndex, int cacheAssoc) {
   for(int i = 0; i < cacheAssoc; i++)
