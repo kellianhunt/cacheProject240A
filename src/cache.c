@@ -125,13 +125,11 @@ parse_address(uint32_t address, int leftoffset, int rightoffset) {
 
 uint32_t
 rebuild_address(struct cache *cachePtr, uint32_t tag, uint32_t index, uint32_t blockoffset) {
-
   uint32_t newTag = tag << (cachePtr->indexBits + cachePtr->offsetBits);
   uint32_t newIndex = index << (cachePtr->offsetBits);
   uint32_t newBlockoffset = blockoffset;
 
   return newTag + newIndex + newBlockoffset;
-
 }
 
 void
@@ -436,7 +434,7 @@ l2cache_access(uint32_t addr)
       update_lru(&l2cache.sets[index], i, l2cacheAssoc);
 
       if(inclusive == TRUE) {
-        uint32_t invalidAddress = 
+        uint32_t invalidAddress = rebuild_address(&l2cache, setTemp.nWays[i].tag, setTemp.nWays[i].index, setTemp.nWays[i].blockoffset);
         invalidate(&icache, invalidAddress);
         invalidate(&dcache, invalidAddress);
       }
