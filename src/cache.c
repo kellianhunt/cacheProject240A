@@ -9,6 +9,7 @@
 #include "cache.h"
 #include <math.h>
 #include <stdio.h>
+#define ADDRESS_SIZE 32
 
 //
 // TODO:Student Information
@@ -123,11 +124,10 @@ update_lru(struct set *cacheSet, int wayIndex, int cacheAssoc) {
     if(cacheSet->nWays[i].lru < cacheSet->nWays[wayIndex].lru)
       cacheSet->nWays[i].lru++;
   
-  if (count < 5) { printf("lru %d to 0", cacheSet->nWays[wayIndex].lru); }
-  cacheSet->nWays[wayIndex].lru = 0;
+  if (count < 5) { printf("lru %d to 1", cacheSet->nWays[wayIndex].lru); }
+  cacheSet->nWays[wayIndex].lru = 1;
 }
-
-int ADDRESS_SIZE = 32; 
+ 
 //------------------------------------//
 //          Cache Functions           //
 //------------------------------------//
@@ -245,7 +245,7 @@ icache_access(uint32_t addr)
 
     // call l2cache_access to check if it has a hit
     // it returns memspeed if it doesn't have it, l2 hit time if it does
-    return dcache_access(addr); 
+    return l2cache_access(addr); 
   } 
   
   // no room - have to kick some valid entry out
@@ -258,7 +258,7 @@ icache_access(uint32_t addr)
       icache.sets[index].nWays[i].blockoffset = blockoffset;
       icache.sets[index].nWays[i].validBit = 1; 
 
-      return dcache_access(addr);
+      return l2cache_access(addr);
     }
   } 
 
