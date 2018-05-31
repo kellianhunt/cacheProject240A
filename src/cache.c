@@ -209,9 +209,8 @@ init_cache()
 uint32_t
 icache_access(uint32_t addr)
 {
-  //
-  //TODO: Implement I$
-  //
+  icachePenalties++;
+
   if(count < 5) { printf("tag bit: %d, index bits: %d, blockoffset bits: %d\n", icacheTagBits, icacheIndexBits, blockoffsetBits); }
   int index = parse_address(addr, icacheTagBits, blockoffsetBits);
   int tag = parse_address(addr, 0, icacheTagBits + blockoffsetBits);
@@ -219,22 +218,57 @@ icache_access(uint32_t addr)
   if(count < 5) { printf("\tResult--- index: %d, tag: %d, blockoffset: %d\n\n\n", index, tag, blockoffset); }
   count++;
 
-  // Index into the cache
+  // index into the cache
   struct set setTemp = icache.sets[index];
+  int indexOfInvalid = -1; // keep track of somewhere we can put the new entry in the case of a miss
   for (int i = 0; i < icacheAssoc; i++) {
     if(setTemp.nWays[i].tag == tag){
-      //Check valid bit
-      if(setTemp.nWays[i].validBit == 1){ //hit
+      // check valid bit
+      if(setTemp.nWays[i].validBit == 1) { // hit!
+        icacheRefs++;
+
+        // update the cache
         update_lru(&icache.sets[index], i, icacheAssoc);
-      } else { // miss
-
+        return icacheHitTime;
       }
+
+      indexOfInvalid = i;
+      break;
     }
+
+    if(setTemp.nWays[i].validBit == 0)
+      indexOfInvalid = i;    
   }
+
+  // miss
+  icacheMisses++;
   
+  // check if we have room for the entry
+  if (indexOfInvalid > 0) {
+    // update the cache
+    update_lru(&icache.sets[index], indexOfInvalid, icacheAssoc);
+    icache.sets[index].nWays[indexOfInvalid].tag = tag;
+    icache.sets[index].nWays[indexOfInvalid].blockoffset = blockoffset; 
+    icache.sets[index].nWays[indexOfInvalid].validBit = 1;
 
-  // Check valid bit in cache
+    // call l2cache_access to check if it has a hit
+    // it returns memspeed if it doesn't have it, l2 hit time if it does
+    return dcache_access(addr); 
+  } 
+  
+  // no room - have to kick some valid entry out
+  // find the LRU
+  for (int i = 0; i < icacheAssoc; i++) {
+    if (setTemp.nWays[i].lru == icacheAssoc) { // found LRU
+      // update the cache
+      update_lru(&icache.sets[index], i, icacheAssoc);
+      icache.sets[index].nWays[i].tag = tag;
+      icache.sets[index].nWays[i].blockoffset = blockoffset;
+      icache.sets[index].nWays[i].validBit = 1; 
 
+      return dcache_access(addr);
+    }
+  } 
 
   return memspeed;
 }
@@ -245,9 +279,8 @@ icache_access(uint32_t addr)
 uint32_t
 dcache_access(uint32_t addr)
 {
-  //
-  //TODO: Implement D$
-  //
+  dcachePenalties++;
+  
   uint32_t index = parse_address(addr, dcacheTagBits, blockoffsetBits);
   uint32_t tag = parse_address(addr, 0, dcacheIndexBits + blockoffsetBits);
   uint32_t blockoffset = parse_address(addr, dcacheTagBits + dcacheIndexBits, 0);
@@ -261,9 +294,8 @@ dcache_access(uint32_t addr)
 uint32_t
 l2cache_access(uint32_t addr)
 {
-  //
-  //TODO: Implement L2$
-  //
+  l2cachePenalties++;
+
   int index = parse_address(addr, l2cacheTagBits, blockoffsetBits);
   int tag = parse_address(addr, 0, l2cacheIndexBits + blockoffsetBits);
   int blockoffset = parse_address(addr, l2cacheTagBits + l2cacheIndexBits, 0);
