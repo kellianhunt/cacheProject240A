@@ -242,7 +242,7 @@ uint32_t
 icache_access(uint32_t addr)
 {
   icacheRefs++;
-
+  uint32_t pen = 0;
   //if(count < 5) { printf("tag bit: %d, index bits: %d, blockoffset bits: %d\n", icacheTagBits, icacheIndexBits, blockoffsetBits); }
   uint32_t index = parse_address(addr, icacheTagBits, blockoffsetBits);
   uint32_t tag = parse_address(addr, 0, icacheIndexBits + blockoffsetBits);
@@ -283,8 +283,10 @@ icache_access(uint32_t addr)
 
     // call l2cache_access to check if it has a hit
     // it returns memspeed if it doesn't have it, l2 hit time if it does
-    icachePenalties += l2cache_access(addr);
-    return icachePenalties + icacheHitTime; 
+    pen = l2cache_access(addr);
+    icachePenalties += pen;//l2cache_access(addr);
+    printf("icache hit penalty: %d, l2 penalty: %d\n", (int)icachePenalties, (int)pen);
+    return icachePenalties;// + icacheHitTime; 
   } 
   
   // no room - have to kick some valid entry out
@@ -297,13 +299,17 @@ icache_access(uint32_t addr)
       icache.sets[index].nWays[i].blockoffset = blockoffset;
       icache.sets[index].nWays[i].validBit = 1; 
 
-      icachePenalties += l2cache_access(addr);
-      return icachePenalties + icacheHitTime;
+      pen = l2cache_access(addr);
+      icachePenalties += pen;//l2cache_access(addr);
+      printf("icache hit penalty: %d, l2 penalty: %d\n", (int)icachePenalties, (int)pen);
+      return icachePenalties;// + icacheHitTime;
     }
   } 
 
-  icachePenalties += l2cache_access(addr);
-  return icachePenalties + icacheHitTime;
+  pen = l2cache_access(addr);
+  icachePenalties += pen;//l2cache_access(addr);
+  printf("icache hit penalty: %d, l2 penalty: %d\n", (int)icachePenalties, (int)pen);
+  return icachePenalties;// + icacheHitTime;
 }
 
 // Perform a memory access through the dcache interface for the address 'addr'
@@ -428,7 +434,7 @@ l2cache_access(uint32_t addr)
     // call l2cache_access to check if it has a hit
     // it returns memspeed if it doesn't have it, l2 hit time if it does
     l2cachePenalties += memspeed;
-    return l2cachePenalties + l2cacheHitTime;
+    return memspeed + l2cacheHitTime;//l2cachePenalties + l2cacheHitTime;
   } 
   
   // no room - have to kick some valid entry out
@@ -448,10 +454,10 @@ l2cache_access(uint32_t addr)
       l2cache.sets[index].nWays[i].validBit = 1; 
 
       l2cachePenalties += memspeed;
-      return l2cachePenalties + l2cacheHitTime;
+      return memspeed + l2cacheHitTime;//l2cachePenalties + l2cacheHitTime;
     }
   } 
 
   l2cachePenalties += memspeed;
-  return l2cachePenalties + l2cacheHitTime;
+  return memspeed + l2cacheHitTime;//l2cachePenalties + l2cacheHitTime;
 }
