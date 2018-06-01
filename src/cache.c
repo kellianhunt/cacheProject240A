@@ -299,12 +299,12 @@ icache_access(uint32_t addr)
         icache.sets[index].nWays[i].validBit = 1; 
 
         icachePenalties += l2cache_access(addr);
-        return icachePenalties;// + icacheHitTime;
+        return icachePenalties + icacheHitTime;
       }
     } 
 
     icachePenalties += l2cache_access(addr);
-    return icachePenalties;// + icacheHitTime;
+    return icachePenalties + icacheHitTime;
   }
   else{
     return l2cache_access(addr);
@@ -358,7 +358,7 @@ dcache_access(uint32_t addr)
       // call l2cache_access to check if it has a hit
       // it returns memspeed if it doesn't have it, l2 hit time if it does
       dcachePenalties += l2cache_access(addr);
-      return dcachePenalties + dcacheHitTime;
+      return dcachePenalties;// + dcacheHitTime;
     } 
     
     // no room - have to kick some valid entry out
