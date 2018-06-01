@@ -285,7 +285,7 @@ icache_access(uint32_t addr)
       // call l2cache_access to check if it has a hit
       // it returns memspeed if it doesn't have it, l2 hit time if it does
       icachePenalties += l2cache_access(addr);
-      return icachePenalties;// + icacheHitTime; 
+      return icachePenalties + icacheHitTime; 
     } 
     
     // no room - have to kick some valid entry out
@@ -356,7 +356,7 @@ dcache_access(uint32_t addr)
       // call l2cache_access to check if it has a hit
       // it returns memspeed if it doesn't have it, l2 hit time if it does
       dcachePenalties += l2cache_access(addr);
-      return dcachePenalties;// + dcacheHitTime;
+      return dcachePenalties + dcacheHitTime;
     } 
     
     // no room - have to kick some valid entry out
@@ -443,7 +443,7 @@ l2cache_access(uint32_t addr)
   // find the LRU
   for (int i = 0; i < l2cacheAssoc; i++) {
     if (setTemp.nWays[i].lru == l2cacheAssoc) { // found LRU
-    
+
       if(inclusive == TRUE) { //invalidate L1 cache victim
         uint32_t invalidAddress = rebuild_address(&l2cache, 
         setTemp.nWays[i].tag, 
