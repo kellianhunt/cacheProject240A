@@ -306,9 +306,7 @@ icache_access(uint32_t addr)
     icachePenalties += l2cache_access(addr);
     return icachePenalties + icacheHitTime;
   }
-  else{
-    return l2cache_access(addr);
-  }
+  else{return l2cache_access(addr);}
 }
 
 // Perform a memory access through the dcache interface for the address 'addr'
@@ -379,9 +377,7 @@ dcache_access(uint32_t addr)
     dcachePenalties += l2cache_access(addr);
     return dcachePenalties + dcacheHitTime;
   }
-  else{
-    return l2cache_access(addr);
-  }
+  else{return l2cache_access(addr);}
 }
 
 // Perform a memory access to the l2cache for the address 'addr'
@@ -423,9 +419,9 @@ l2cache_access(uint32_t addr)
   if (indexOfInvalid > 0) {
     if(inclusive == TRUE) {
       uint32_t invalidAddress = rebuild_address(&l2cache, 
-        l2cache.sets[index].nWays[indexOfInvalid].tag, 
-        l2cache.sets[index].nWays[indexOfInvalid].index, 
-        l2cache.sets[index].nWays[indexOfInvalid].blockoffset);
+      l2cache.sets[index].nWays[indexOfInvalid].tag, 
+      l2cache.sets[index].nWays[indexOfInvalid].index, 
+      l2cache.sets[index].nWays[indexOfInvalid].blockoffset);
       invalidate(&icache, invalidAddress);
       invalidate(&dcache, invalidAddress);
     }
@@ -446,7 +442,10 @@ l2cache_access(uint32_t addr)
   for (int i = 0; i < l2cacheAssoc; i++) {
     if (setTemp.nWays[i].lru == l2cacheAssoc) { // found LRU
       if(inclusive == TRUE) {
-        uint32_t invalidAddress = rebuild_address(&l2cache, setTemp.nWays[i].tag, setTemp.nWays[i].index, setTemp.nWays[i].blockoffset);
+        uint32_t invalidAddress = rebuild_address(&l2cache, 
+        setTemp.nWays[i].tag, 
+        setTemp.nWays[i].index, 
+        setTemp.nWays[i].blockoffset);
         invalidate(&icache, invalidAddress);
         invalidate(&dcache, invalidAddress);
       }
