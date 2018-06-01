@@ -184,7 +184,7 @@ init_cache()
   blockoffsetBits = log2(blocksize);
   icacheTagBits = ADDRESS_SIZE - icacheIndexBits - blockoffsetBits;
   dcacheTagBits = ADDRESS_SIZE - dcacheIndexBits - blockoffsetBits;
-  l2cacheTagBits = ADDRESS_SIZE - dcacheIndexBits - blockoffsetBits;
+  l2cacheTagBits = ADDRESS_SIZE - l2cacheIndexBits - blockoffsetBits;
   
   icache.sets = malloc(icacheSets * sizeof(struct set));
   for (int i = 0; i < icacheSets; i++){
@@ -221,7 +221,7 @@ init_cache()
   l2cache.sets = malloc(l2cacheSets * sizeof(struct set));
   for (int i = 0; i < l2cacheSets; i++){
     l2cache.sets[i].nWays = malloc(l2cacheAssoc * sizeof(struct way));
-    for (int j = 0; j < icacheAssoc; j++) {
+    for (int j = 0; j < l2cacheAssoc; j++) {
       l2cache.sets[i].nWays[j].validBit = 0;
       l2cache.sets[i].nWays[j].tag = 0;
       l2cache.sets[i].nWays[j].index = 0;
@@ -229,10 +229,10 @@ init_cache()
       l2cache.sets[i].nWays[j].lru = l2cacheAssoc;
     }
   }
-  l2cache.tagBits = dcacheTagBits;
+  l2cache.tagBits = l2cacheTagBits;
   l2cache.offsetBits = blockoffsetBits;
-  l2cache.associativity = dcacheAssoc;
-  l2cache.indexBits = dcacheIndexBits;
+  l2cache.associativity = l2cacheAssoc;
+  l2cache.indexBits = l2cacheIndexBits;
 }
 
 // Perform a memory access through the icache interface for the address 'addr'
@@ -381,13 +381,10 @@ uint32_t
 l2cache_access(uint32_t addr)
 {
   l2cacheRefs++;
-  
-  //if(count < 5) { printf("tag bit: %d, index bits: %d, blockoffset bits: %d\n", l2cacheTagBits, l2cacheIndexBits, blockoffsetBits); }
+
   uint32_t index = parse_address(addr, l2cacheTagBits, blockoffsetBits);
   uint32_t tag = parse_address(addr, 0, l2cacheIndexBits + blockoffsetBits);
   uint32_t blockoffset = parse_address(addr, l2cacheTagBits + l2cacheIndexBits, 0);
-  //if(count < 5) { printf("\tResult--- index: %d, tag: %d, blockoffset: %d\n\n\n", index, tag, blockoffset); }
-
 
   // index into the cache
   struct set setTemp = l2cache.sets[index];
@@ -414,6 +411,14 @@ l2cache_access(uint32_t addr)
   
   // check if we have room for the entry
   if (indexOfInvalid > 0) {
+    if(inclusive == TRUE) {
+      uint32_t invalidAddress = rebuild_address(&l2cache, 
+        l2cache.sets[index].nWays[indexOfInvalid].tag, 
+        l2cache.sets[index].nWays[indexOfInvalid].index, 
+        l2cache.sets[index].nWays[indexOfInvalid].blockoffset);
+      invalidate(&icache, invalidAddress);
+      invalidate(&dcache, invalidAddress);
+    }
     // update the cache
     update_lru(&l2cache.sets[index], indexOfInvalid, l2cacheAssoc);
     l2cache.sets[index].nWays[indexOfInvalid].tag = tag;
@@ -430,15 +435,14 @@ l2cache_access(uint32_t addr)
   // find the LRU
   for (int i = 0; i < l2cacheAssoc; i++) {
     if (setTemp.nWays[i].lru == l2cacheAssoc) { // found LRU
-      // update the cache
-      update_lru(&l2cache.sets[index], i, l2cacheAssoc);
-
       if(inclusive == TRUE) {
         uint32_t invalidAddress = rebuild_address(&l2cache, setTemp.nWays[i].tag, setTemp.nWays[i].index, setTemp.nWays[i].blockoffset);
         invalidate(&icache, invalidAddress);
         invalidate(&dcache, invalidAddress);
       }
 
+      // update the cache
+      update_lru(&l2cache.sets[index], i, l2cacheAssoc);
       l2cache.sets[index].nWays[i].tag = tag;
       l2cache.sets[index].nWays[i].blockoffset = blockoffset;
       l2cache.sets[index].nWays[i].validBit = 1; 
