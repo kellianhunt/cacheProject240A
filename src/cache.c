@@ -417,7 +417,8 @@ l2cache_access(uint32_t addr)
   
   // check if we have room for the entry
   if (indexOfInvalid > 0) {
-    if(inclusive == TRUE) {
+
+    if(inclusive == TRUE) { //invalidate L1 cache victim
       uint32_t invalidAddress = rebuild_address(&l2cache, 
       l2cache.sets[index].nWays[indexOfInvalid].tag, 
       l2cache.sets[index].nWays[indexOfInvalid].index, 
@@ -425,6 +426,7 @@ l2cache_access(uint32_t addr)
       invalidate(&icache, invalidAddress);
       invalidate(&dcache, invalidAddress);
     }
+
     // update the cache
     update_lru(&l2cache.sets[index], indexOfInvalid, l2cacheAssoc);
     l2cache.sets[index].nWays[indexOfInvalid].tag = tag;
@@ -441,7 +443,8 @@ l2cache_access(uint32_t addr)
   // find the LRU
   for (int i = 0; i < l2cacheAssoc; i++) {
     if (setTemp.nWays[i].lru == l2cacheAssoc) { // found LRU
-      if(inclusive == TRUE) {
+    
+      if(inclusive == TRUE) { //invalidate L1 cache victim
         uint32_t invalidAddress = rebuild_address(&l2cache, 
         setTemp.nWays[i].tag, 
         setTemp.nWays[i].index, 
