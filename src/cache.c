@@ -290,6 +290,19 @@ icache_access(uint32_t addr)
         int icachePenalty = l2cache_access(addr);
         icachePenalties += icachePenalty;
 
+        // check if l2 invalidated an entry so we can avoid kicking out a valid one
+        for (int j = 0; j < icacheAssoc; j++) {
+          if(setTemp.nWays[j].validBit == 0) {
+            // update the cache
+            update_lru(&icache.sets[index], j, icacheAssoc);
+            icache.sets[index].nWays[j].tag = tag;
+            icache.sets[index].nWays[j].index = index;
+            icache.sets[index].nWays[j].blockoffset = blockoffset;
+            icache.sets[index].nWays[j].validBit = 1; 
+            return icachePenalty + icacheHitTime;
+          }
+        }
+
         // update the cache
         update_lru(&icache.sets[index], i, icacheAssoc);
         icache.sets[index].nWays[i].tag = tag;
@@ -368,6 +381,21 @@ dcache_access(uint32_t addr)
     for (int i = 0; i < dcacheAssoc; i++) {
       if (setTemp.nWays[i].lru == dcacheAssoc) { // found LRU
         int dcachePenalty = l2cache_access(addr);
+        dcachePenalties += dcachePenalty;
+
+        // check if l2 invalidated an entry so we can avoid kicking out a valid one
+        for (int j = 0; j < dcacheAssoc; j++) {
+          if(setTemp.nWays[j].validBit == 0) {
+            // update the cache
+            update_lru(&dcache.sets[index], j, dcacheAssoc);
+            dcache.sets[index].nWays[j].tag = tag;
+            dcache.sets[index].nWays[j].index = index;
+            dcache.sets[index].nWays[j].blockoffset = blockoffset;
+            dcache.sets[index].nWays[j].validBit = 1; 
+            
+            return dcachePenalty + dcacheHitTime;
+          }
+        }
 
         // update the cache
         update_lru(&dcache.sets[index], i, dcacheAssoc);
@@ -376,7 +404,6 @@ dcache_access(uint32_t addr)
         dcache.sets[index].nWays[i].blockoffset = blockoffset;
         dcache.sets[index].nWays[i].validBit = 1; 
 
-        dcachePenalties += dcachePenalty;
         return dcachePenalty + dcacheHitTime;
       }
     } 
